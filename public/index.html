@@ -1,20 +1,129 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>PNR Status Checker</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TestRun – Railway Checks</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      color: #333;
+      text-align: center;
+      margin: 0;
+      padding: 2rem;
+    }
+    h1 {
+      color: #0066cc;
+      margin-bottom: 1rem;
+    }
+    select, input, button {
+      padding: 0.5rem;
+      font-size: 16px;
+      margin: 0.5rem;
+    }
+    button {
+      background-color: #0066cc;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #004d99;
+    }
+    pre {
+      text-align: left;
+      background-color: #fff;
+      padding: 1rem;
+      margin: 2rem auto;
+      max-width: 600px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      border-radius: 4px;
+    }
+  </style>
 </head>
 <body>
-  <h1>Check PNR Status</h1>
-  <input id="pnr" placeholder="Enter PNR" />
-  <button onclick="checkPNR()">Check</button>
-  <pre id="result"></pre>
+  <h1 id="title">TestRun – Railway Checks</h1>
+  <select id="language" onchange="translate()">
+    <option value="en">English</option>
+    <option value="hi">हिन्दी</option>
+    <option value="ta">தமிழ்</option>
+    <option value="ml">മലയാളം</option>
+    <option value="kn">ಕನ್ನಡ</option>
+    <option value="mr">मराठी</option>
+    <option value="bn">বাংলা</option>
+    <option value="pa">ਪੰਜਾਬੀ</option>
+  </select>
+  <p id="instruction">Enter your 10-digit PNR number below:</p>
+  <input id="pnr" type="text" maxlength="10" placeholder="e.g., 4344484848" />
+  <button onclick="checkPNR()" id="checkBtn">Check PNR Status</button>
+  <pre id="result">PNR status will appear here...</pre>
 
   <script>
+    const translations = {
+      hi: {
+        title: "टेस्ट रन – रेलवे जांचें",
+        instruction: "अपना 10 अंकों का पीएनआर नंबर दर्ज करें:",
+        check: "पीएनआर स्थिति जांचें"
+      },
+      ta: {
+        title: "டெஸ்ட் ரன் – ரயில்வே சரிபார்ப்பு",
+        instruction: "உங்கள் 10 இலக்க PNR எண்ணை உள்ளிடவும்:",
+        check: "PNR நிலையை சரிபார்க்கவும்"
+      },
+      ml: {
+        title: "ടെസ്റ്റ്റൺ – റെയിൽവേ പരിശോധന",
+        instruction: "നിങ്ങളുടെ 10 അക്ക PNR നമ്പർ നൽകുക:",
+        check: "PNR സ്ഥിതി പരിശോധിക്കുക"
+      },
+      kn: {
+        title: "ಟೆಸ್ಟ್‌ರನ್ – ರೈಲು ತಪಾಸಣೆ",
+        instruction: "ನಿಮ್ಮ 10 ಅಂಕಿಯ PNR ಸಂಖ್ಯೆಯನ್ನು ನಮೂದಿಸಿ:",
+        check: "PNR ಸ್ಥಿತಿಯನ್ನು ಪರಿಶೀಲಿಸಿ"
+      },
+      mr: {
+        title: "टेस्ट रन – रेल्वे तपासणी",
+        instruction: "आपला 10 अंकी पीएनआर क्रमांक प्रविष्ट करा:",
+        check: "PNR स्थिती तपासा"
+      },
+      bn: {
+        title: "টেস্ট রান – রেলওয়ে চেক",
+        instruction: "আপনার 10-অঙ্কের পিএনআর নম্বর লিখুন:",
+        check: "PNR স্থিতি যাচাই করুন"
+      },
+      pa: {
+        title: "ਟੈਸਟ ਰਨ – ਰੇਲਵੇ ਜਾਂਚਾਂ",
+        instruction: "ਆਪਣਾ 10 ਅੰਕਾਂ ਵਾਲਾ PNR ਨੰਬਰ ਦਰਜ ਕਰੋ:",
+        check: "PNR ਸਥਿਤੀ ਜਾਂਚੋ"
+      },
+      en: {
+        title: "TestRun – Railway Checks",
+        instruction: "Enter your 10-digit PNR number below:",
+        check: "Check PNR Status"
+      }
+    };
+
+    function translate() {
+      const lang = document.getElementById("language").value;
+      document.getElementById("title").textContent = translations[lang].title;
+      document.getElementById("instruction").textContent = translations[lang].instruction;
+      document.getElementById("checkBtn").textContent = translations[lang].check;
+    }
+
     async function checkPNR() {
       const pnr = document.getElementById("pnr").value;
-      const res = await fetch(`/api/pnr/${pnr}`);
-      const data = await res.json();
-      document.getElementById("result").textContent = JSON.stringify(data, null, 2);
+      if (!pnr || pnr.length !== 10) {
+        alert("Please enter a valid 10-digit PNR number.");
+        return;
+      }
+      document.getElementById("result").textContent = "Checking...";
+      try {
+        const res = await fetch(`/api/pnr/${pnr}`);
+        const data = await res.json();
+        document.getElementById("result").textContent = JSON.stringify(data, null, 2);
+      } catch (error) {
+        document.getElementById("result").textContent = "Error fetching PNR status.";
+      }
     }
   </script>
 </body>
