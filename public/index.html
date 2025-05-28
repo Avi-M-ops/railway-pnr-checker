@@ -40,6 +40,28 @@
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
       border-radius: 4px;
     }
+    .alert {
+      max-width: 600px;
+      margin: 1rem auto;
+      padding: 1rem;
+      border-radius: 4px;
+      font-weight: bold;
+    }
+    .alert-error {
+      background-color: #ffe5e5;
+      color: #cc0000;
+      border: 1px solid #cc0000;
+    }
+    .alert-success {
+      background-color: #e6ffe6;
+      color: #006600;
+      border: 1px solid #006600;
+    }
+    .alert-warning {
+      background-color: #fff3cd;
+      color: #856404;
+      border: 1px solid #ffeeba;
+    }
   </style>
 </head>
 <body>
@@ -57,6 +79,8 @@
   <p id="instruction">Enter your 10-digit PNR number below:</p>
   <input id="pnr" type="text" maxlength="10" placeholder="e.g., 4344484848" />
   <button onclick="checkPNR()" id="checkBtn">Check PNR Status</button>
+
+  <div id="alertBox" class="alert" style="display:none;"></div>
   <pre id="result">PNR status will appear here...</pre>
 
   <script>
@@ -110,19 +134,46 @@
       document.getElementById("checkBtn").textContent = translations[lang].check;
     }
 
-    async function checkPNR() {
+    function showAlert(type, message) {
+      const alertBox = document.getElementById("alertBox");
+      alertBox.className = "alert";
+      alertBox.style.display = "block";
+      if (type === "error") {
+        alertBox.classList.add("alert-error");
+      } else if (type === "warning") {
+        alertBox.classList.add("alert-warning");
+      } else {
+        alertBox.classList.add("alert-success");
+      }
+      alertBox.textContent = message;
+    }
+
+    async function checkPNR(retry = false) {
       const pnr = document.getElementById("pnr").value;
+      const resultBox = document.getElementById("result");
+      document.getElementById("alertBox").style.display = "none";
       if (!pnr || pnr.length !== 10) {
-        alert("Please enter a valid 10-digit PNR number.");
+        showAlert("error", "Please enter a valid 10-digit PNR number.");
         return;
       }
-      document.getElementById("result").textContent = "Checking...";
+      resultBox.textContent = "Checking...";
       try {
         const res = await fetch(`/api/pnr/${pnr}`);
         const data = await res.json();
-        document.getElementById("result").textContent = JSON.stringify(data, null, 2);
+        if (res.status !== 200) {
+          showAlert("warning", data.error || "Unexpected error occurred.");
+          if (data.error && data.error.includes("Server is busy") && !retry) {
+            showAlert("warning", data.error + " Retrying in 30 seconds...");
+            setTimeout(() => checkPNR(true), 30000);
+          }
+          resultBox.textContent = "Retry if needed...";
+        } else {
+          resultBox.textContent = JSON.stringify(data, null, 2);
+          showAlert("success", "PNR status retrieved successfully.");
+        }
       } catch (error) {
-        document.getElementById("result").textContent = "Error fetching PNR status.";
+        showAlert("error", "Network error. Please check your connection.");
+        resultBox.textContent = "Network error.";
       }
     }
   </script>
