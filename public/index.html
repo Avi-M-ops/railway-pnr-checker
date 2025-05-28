@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>PNR Status Checker</title>
+</head>
+<body>
+  <h1>Check PNR Status</h1>
+  <input id="pnr" placeholder="Enter PNR" />
+  <button onclick="checkPNR()">Check</button>
+  <pre id="result"></pre>
+
+  <script>
+    async function checkPNR() {
+      const pnr = document.getElementById("pnr").value;
+      const res = await fetch(`/api/pnr/${pnr}`);
+      const data = await res.json();
+      document.getElementById("result").textContent = JSON.stringify(data, null, 2);
+    }
+  </script>
+</body>
+</html>
