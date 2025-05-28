@@ -162,14 +162,14 @@
         const data = await res.json();
         if (res.status !== 200) {
           showAlert("warning", data.error || "Unexpected error occurred.");
-          if (data.error && data.error.includes("Server is busy") && !retry) {
+          if (data.error && (data.error.includes("Server is busy")||data.error.includes("Server busy")) && !retry) {
             showAlert("warning", data.error + " Retrying in 30 seconds...");
             setTimeout(() => checkPNR(true), 30000);
           }
           resultBox.textContent = "Retry if needed...";
         } else {
           resultBox.textContent = JSON.stringify(data, null, 2);
-          showAlert("success", "PNR status retrieved successfully.");
+          showAlert(" ", "PNR status retrieved successfully.");
         }
       } catch (error) {
         showAlert("error", "Network error. Please check your connection.");
