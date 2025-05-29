@@ -7,10 +7,25 @@ app.use(express.static('public'));
 
 app.get('/api/pnr/:pnr', async (req, res) => {
   try {
-    const response = await axios.get(`https://indianrailapi.com/api/v2/PNRCheck/apikey/${process.env.API_KEY}/PNRNumber/${req.params.pnr}/`);
+    const options = {
+      method: 'GET',
+      url: `https://irctc-indian-railway-pnr-status.p.rapidapi.com/getPNRStatus/${req.params.pnr}`,
+      headers: {
+        'x-rapidapi-host': 'irctc-indian-railway-pnr-status.p.rapidapi.com',
+        'x-rapidapi-key': process.env.RAPIDAPI_KEY
+      }
+    };
+
+    const response = await axios.request(options);
+    console.log("Full response:", JSON.stringify(response.data, null, 2)); // <-- Better visibility
     res.json(response.data);
+
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch PNR status' });
+    console.error("PNR Fetch Error:", err.message);
+    res.status(500).json({
+      success: false,
+      error: 'Unable to fetch PNR status. Please try again later.'
+    });
   }
 });
 
