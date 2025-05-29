@@ -61,7 +61,8 @@ app.get('/api/train/:trainNumber', async (req, res) => {
       url: url,
       headers: {
         'x-rapidapi-host': 'indian-railway-irctc.p.rapidapi.com',
-        'x-rapidapi-key': process.env.RAPIDAPI_KEY
+        'x-rapidapi-key': process.env.RAPIDAPI_KEY,
+        'x-rapid-api': 'rapid-api-database'
       }
     };
 
