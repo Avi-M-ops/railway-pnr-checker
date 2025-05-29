@@ -60,9 +60,8 @@ app.get('/api/train/:trainNumber', async (req, res) => {
       method: 'GET',
       url: url,
       headers: {
-        'x-rapid-api': 'rapid-api-database',
         'x-rapidapi-host': 'indian-railway-irctc.p.rapidapi.com',
-        'x-rapidapi-key': '326b0b7badmshac57852cf35c6a7p10bcdbjsn85f1042fe8ae'
+        'x-rapidapi-key': process.env.RAPIDAPI_KEY
       }
     };
 
@@ -70,9 +69,14 @@ app.get('/api/train/:trainNumber', async (req, res) => {
     res.json(response.data);
   } catch (error) {
     console.error("❌ Train status error:", error.response?.data || error.message);
-    res.status(500).json({ success: false, message: "Train status fetch failed" });
+    res.status(500).json({
+      success: false,
+      message: "Train status fetch failed",
+      details: error.response?.data || error.message
+    });
   }
 });
+
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
