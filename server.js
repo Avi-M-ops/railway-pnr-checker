@@ -1,3 +1,4 @@
+
 const express = require('express');
 const axios = require('axios');
 require('dotenv').config();
@@ -15,17 +16,28 @@ app.get('/api/pnr/:pnr', async (req, res) => {
         'x-rapidapi-key': process.env.RAPIDAPI_KEY
       }
     };
-
     const response = await axios.request(options);
-    console.log("Full response:", JSON.stringify(response.data, null, 2)); // <-- Better visibility
     res.json(response.data);
-
   } catch (err) {
-    console.error("PNR Fetch Error:", err.message);
-    res.status(500).json({
-      success: false,
-      error: 'Unable to fetch PNR status. Please try again later.'
-    });
+    res.status(500).json({ success: false, error: 'Unable to fetch PNR status.' });
+  }
+});
+
+app.get('/api/train/:trainNo', async (req, res) => {
+  try {
+    const options = {
+      method: 'GET',
+      url: `https://indian-railway-irctc.p.rapidapi.com/api/trains-search/v1/train/${req.params.trainNo}?isH5=true&client=web`,
+      headers: {
+        'x-rapid-api': 'rapid-api-database',
+        'x-rapidapi-host': 'indian-railway-irctc.p.rapidapi.com',
+        'x-rapidapi-key': process.env.RAPIDAPI_KEY
+      }
+    };
+    const response = await axios.request(options);
+    res.json(response.data);
+  } catch (err) {
+    res.status(500).json({ success: false, error: 'Unable to fetch train status.' });
   }
 });
 

@@ -6,12 +6,10 @@
   <title>TestRun – Railway Checks</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
   <style>
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
     body {
       font-family: 'Roboto', sans-serif;
-      background: linear-gradient(to right, #e0f7fa, #ffffff);
+      background: #e3f2fd;
       margin: 0;
       padding: 0;
       display: flex;
@@ -21,7 +19,7 @@
     }
     header {
       padding: 1.5rem;
-      background-color: #006064;
+      background-color: #0d47a1;
       color: white;
       width: 100%;
       text-align: center;
@@ -35,7 +33,7 @@
       margin: 2rem;
       border-radius: 10px;
       box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-      max-width: 700px;
+      max-width: 800px;
       width: 100%;
     }
     input, button {
@@ -47,13 +45,13 @@
       border: 1px solid #ccc;
     }
     button {
-      background-color: #00838f;
+      background-color: #1976d2;
       color: white;
       border: none;
       font-weight: bold;
     }
     button:hover {
-      background-color: #006064;
+      background-color: #0d47a1;
     }
     .alert {
       padding: 1rem;
@@ -61,18 +59,9 @@
       border-radius: 6px;
       font-weight: bold;
     }
-    .alert-success {
-      background-color: #e8f5e9;
-      color: #2e7d32;
-    }
-    .alert-warning {
-      background-color: #fff3cd;
-      color: #856404;
-    }
-    .alert-error {
-      background-color: #f8d7da;
-      color: #721c24;
-    }
+    .alert-success { background-color: #e3fcec; color: #1b5e20; }
+    .alert-warning { background-color: #fff8e1; color: #ff6f00; }
+    .alert-error   { background-color: #ffebee; color: #b71c1c; }
     .details {
       margin-top: 2rem;
       background: #f9f9f9;
@@ -80,7 +69,7 @@
       border-radius: 6px;
     }
     .details h3 {
-      color: #006064;
+      color: #0d47a1;
     }
     table {
       width: 100%;
@@ -93,17 +82,24 @@
       text-align: left;
     }
     th {
-      background-color: #eceff1;
+      background-color: #e3f2fd;
     }
   </style>
 </head>
 <body>
   <header>TestRun – Railway Checks</header>
   <div class="container">
+    <h2>🔎 Check PNR Status</h2>
     <input id="pnr" type="text" maxlength="10" placeholder="Enter 10-digit PNR number" />
     <button onclick="checkPNR()">Check PNR Status</button>
+
+    <h2 style="margin-top: 2rem;">🚆 Check Train Running Status</h2>
+    <input id="trainNo" type="text" maxlength="5" placeholder="Enter Train Number e.g. 12051" />
+    <button onclick="checkTrain()">Check Train Status</button>
+
     <div id="alertBox" class="alert" style="display:none;"></div>
     <div id="result" class="details" style="display:none;"></div>
+    <div id="trainResult" class="details" style="display:none;"></div>
   </div>
 
   <script>
@@ -128,19 +124,14 @@
         <p><strong>🎫 Fare:</strong> ₹${data.ticketFare} | <strong>VIKALP:</strong> ${data.vikalpStatus || 'N/A'}</p>
         <h4>👤 Passenger Details</h4>
         <table>
-          <tr>
-            <th>#</th>
-            <th>Booking Status</th>
-            <th>Current Status</th>
-          </tr>
+          <tr><th>#</th><th>Booking Status</th><th>Current Status</th></tr>
           ${data.passengerList.map(p =>
             `<tr>
               <td>${p.passengerSerialNumber}</td>
               <td>${p.bookingStatusDetails}</td>
               <td>${p.currentStatusDetails}</td>
             </tr>`).join('')}
-        </table>
-      `;
+        </table>`;
     }
 
     async function checkPNR() {
@@ -167,6 +158,54 @@
         }
       } catch (error) {
         showAlert("error", "Network error. Please check your connection.");
+      }
+    }
+
+    async function checkTrain() {
+      const trainNo = document.getElementById("trainNo").value;
+      const trainResult = document.getElementById("trainResult");
+      document.getElementById("alertBox").style.display = "none";
+      trainResult.style.display = "none";
+      trainResult.innerHTML = "";
+
+      if (!trainNo || trainNo.length < 5) {
+        showAlert("error", "Please enter a valid train number.");
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/train/${trainNo}`);
+        const data = await res.json();
+
+        if (!data.body || !data.body[0] || !data.body[0].trains || !data.body[0].trains[0]) {
+          showAlert("warning", "Train data not found.");
+          return;
+        }
+
+        const train = data.body[0].trains[0];
+        const runDateRaw = data.meta?.server_timestamp_ist || '';
+        const runDate = new Date(runDateRaw).toLocaleDateString('en-GB');
+        trainResult.style.display = "block";
+        trainResult.innerHTML = `
+          <h3>🚆 ${train.trainNumber} – ${train.trainName}</h3>
+          <p><strong>From:</strong> ${train.origin} ➜ <strong>To:</strong> ${train.destination}</p>
+          <p><strong>Classes:</strong> ${train.journeyClasses.join(', ')}</p>
+          <p><strong>📅 Date of Running:</strong> ${runDate}</p>
+          <h4>🗺 Schedule</h4>
+          <table>
+            <tr><th>#</th><th>Station</th><th>Arrives</th><th>Departs</th><th>Dist (km)</th></tr>
+            ${train.schedule.map((s, idx) =>
+              `<tr>
+                <td>${idx + 1}</td>
+                <td>${s.stationName} (${s.stationCode})</td>
+                <td>${s.arrivalTime}</td>
+                <td>${s.departureTime}</td>
+                <td>${s.distance}</td>
+              </tr>`).join('')}
+          </table>`;
+        showAlert("success", "Train status fetched successfully.");
+      } catch (error) {
+        showAlert("error", "Failed to fetch train status.");
       }
     }
   </script>
